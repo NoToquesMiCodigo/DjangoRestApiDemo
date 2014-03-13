@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+    <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js"></script>
+
+    <script>
+        var Libro = Backbone.Model.extend({
+            url : '/api/libros/',
+            initialize: function(){
+               // TODO: acciones de inicialización del modelo
+            }
+        });
+
+        var Libros = Backbone.Collection.extend({
+            model: Libro,
+            url: '/api/libros/',
+            initialize: function(){
+               // TODO: acciones de inicialización del colección
+            }
+        });
+    function listarLibros () {
+        $(".datos").html("")
+        var coleccion_libros = new Libros();
+        coleccion_libros.on("add", function(model){
+            console.log("Agregado", model.toJSON());
+            $(".datos").append("<li>"+
+                JSON.stringify(model.toJSON())+
+                "</li>"
+                );
+        });
+        var xhr = coleccion_libros.fetch()
+        xhr.done(function () {
+            console.log('Libros descargados...');
+            var llibros = coleccion_libros.filter(function (model) {
+                var libro = model.toJSON();
+                return libro.nombre === "El Principito";
+            });
+            if(llibros.length==0){
+                var libroNuevo = new Libro({
+                    "nombre":"El Principito",
+                    "editorial":"Panamericana",
+                    "genero":"Infantil",
+                    "autor":"1"
+                });
+                libroNuevo.save();
+                coleccion_libros.add(libroNuevo);
+            }
+            console.log("0k");
+        });
+
+    }
+    </script>
+
+</head>
+<body>
+    <button onclick="listarLibros()" >Load</button>
+    <ul class="datos">
+        
+    </ul>
+</body>
+</html>
