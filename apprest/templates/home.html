@@ -6,8 +6,39 @@
     <script src="//code.jquery.com/jquery-2.1.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js"></script>
-
+    <style>
+        div.libro {
+            border: 1px solid #aaa;
+            display: inline-block;
+            padding: 1em;
+        }
+        div.actions {
+            text-align: center;
+        }
+    </style>
     <script>
+        var ViewLibro = Backbone.View.extend({
+            events:{
+                "click a#delete" : "eliminar",
+            },
+            initialize : function () {
+                this.template = _.template(
+                         $('#templatelibro').html()
+                         );
+            },
+            render : function() {
+                var data = this.model.toJSON();
+                var html = this.template(data);
+                this.$el.append( html );
+            },
+            eliminar: function(e) {
+                this.model.url = this.model.url+this.model.id;
+                this.model.destroy();
+                var libro = $(e.currentTarget).parent().parent();
+                libro.remove();
+                e.stopPropagation();
+            }
+        });
         var Libro = Backbone.Model.extend({
             url : '/api/libros/',
             initialize: function(){
@@ -22,44 +53,59 @@
                // TODO: acciones de inicialización del colección
             }
         });
-    function listarLibros () {
-        $(".datos").html("")
-        var coleccion_libros = new Libros();
-        coleccion_libros.on("add", function(model){
-            console.log("Agregado", model.toJSON());
-            $(".datos").append("<li>"+
-                JSON.stringify(model.toJSON())+
-                "</li>"
-                );
-        });
-        var xhr = coleccion_libros.fetch()
-        xhr.done(function () {
-            console.log('Libros descargados...');
-            var llibros = coleccion_libros.filter(function (model) {
-                var libro = model.toJSON();
-                return libro.nombre === "El Principito";
+        function listarLibros () {
+            $(".datos").html("")
+            var coleccion_libros = new Libros();
+            coleccion_libros.on("add", function(model){
+                console.log("Agregado", model.toJSON());
+                /*
+                $(".datos").append("<li>"+
+                    JSON.stringify(model.toJSON())+
+                    "</li>"
+                    );
+                */
+                var vl = new ViewLibro({el:$("ul.datos"),model:model});
+                vl.render();
             });
-            if(llibros.length==0){
-                var libroNuevo = new Libro({
-                    "nombre":"El Principito",
-                    "editorial":"Panamericana",
-                    "genero":"Infantil",
-                    "autor":"1"
+            var xhr = coleccion_libros.fetch()
+            xhr.done(function () {
+                console.log('Libros descargados...');
+                var llibros = coleccion_libros.filter(function (model) {
+                    var libro = model.toJSON();
+                    return libro.nombre === "El Principito";
                 });
-                libroNuevo.save();
-                coleccion_libros.add(libroNuevo);
-            }
-            console.log("0k");
-        });
+                if(llibros.length==0){
+                    var libroNuevo = new Libro({
+                        "nombre":"El Principito",
+                        "editorial":"Panamericana",
+                        "genero":"Infantil",
+                        "autor":"1"
+                    });
+                    libroNuevo.save();
+                    libroNuevo.attributes.id = 1;
+                    coleccion_libros.add(libroNuevo);
+                }
+                console.log("0k");
+            });
 
-    }
+        }
     </script>
 
 </head>
 <body>
     <button onclick="listarLibros()" >Load</button>
     <ul class="datos">
-        
     </ul>
 </body>
+
+<script type="text/template" id="templatelibro">
+    <div id="libro-<%= id|1 %>" class="libro">
+        <strong>Nombre:</strong> <%= nombre %> <br/>
+        <strong>Editorial:</strong> <%= editorial %><br/>
+        <strong>Genero:</strong> <%= genero %><br/><br/>
+        <div class="actions">
+            <a href="#" id="delete">Eliminar Libro</a>
+        </div>
+    </div>
+</script>
 </html>
